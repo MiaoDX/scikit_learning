@@ -1,3 +1,5 @@
+#-*- coding: utf-8 -*-
+
 import os
 from urllib.request import urlretrieve
 import traceback
