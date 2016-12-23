@@ -62,7 +62,7 @@ def data2nice(fileName, str2num_dict):
     return all_lines, all_lines_num        
 
 def put_all_lines_num_to_file(to_save_file_name, all_lines_num):
-    with open(to_save_file_name, 'a') as f:
+    with open(to_save_file_name, 'w') as f:
         for line in all_lines_num:
             line_str = ','.join(str(e) for e in line)
             f.write(line_str + '\n')
@@ -70,7 +70,8 @@ def put_all_lines_num_to_file(to_save_file_name, all_lines_num):
 
 
 if __name__ == '__main__':
-    baseDir = 'H:/practice/scikit_class/anao_demo/adults/adult_data/'
+    # baseDir = 'H:/practice/scikit_class/scikit_learning/uci_adult'
+    baseDir = 'adult_data/'
     
     describe_file = baseDir+'describe.txt'
 
