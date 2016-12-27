@@ -30,6 +30,11 @@ def get_all_str2num(fileName):
     
     return all_str2num_dict
 
+def getLine(fileName, lineNum):
+    with open(fileName, 'r') as f:
+        all = f.readlines()
+
+    return all[lineNum].strip()
 
 def data2nice(fileName, str2num_dict):
     all_lines = []
@@ -37,7 +42,7 @@ def data2nice(fileName, str2num_dict):
     now_line = []
     now_line_num = []
     with open(fileName, 'r') as f:
-        all = f.readlines();
+        all = f.readlines()
 
     for line in all:
         now_line = []
