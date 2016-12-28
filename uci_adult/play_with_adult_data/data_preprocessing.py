@@ -202,9 +202,9 @@ def getScaledAndOneHotEncoderedX(X):
     scaleWithFeaturesX = scaleWithFeatures(X, continuous_features)
 
     onehotEncoderedX = oneHotEncoderX(scaleWithFeaturesX, n_values=onehot_n_values, categorical_features=list(range(6, 14)))
-    print(X[1])
-    print(scaleWithFeaturesX[1])
-    print(len(onehotEncoderedX[1]))
+    # print(X[1])
+    # print(scaleWithFeaturesX[1])
+    # print(len(onehotEncoderedX[1]))
 
     return onehotEncoderedX
 
@@ -226,10 +226,7 @@ def loadData():
     return X,y,TX,Ty
 
 
-def logisticRegression(X, y, TX, Ty):
-    # 逻辑回归
-    from sklearn.linear_model import LogisticRegression
-    model = LogisticRegression()
+def testModelOnData(model, X, y, TX, Ty):
     model.fit(X, y)
     print(model)
 
@@ -238,24 +235,44 @@ def logisticRegression(X, y, TX, Ty):
     make_predictions(model, TX, Ty)
 
     print(cross_validation(model, X, y))
+
+
+def logisticRegression(X, y, TX, Ty):
+    # 逻辑回归
+    from sklearn.linear_model import LogisticRegression
+    model = LogisticRegression()
+    testModelOnData(model, X, y, TX, Ty)
 
 
 def decisionTree(X, y, TX, Ty):
     from sklearn.tree import DecisionTreeClassifier
     # fit a CART model to the data
     model = DecisionTreeClassifier()
-    model.fit(X, y)
-    print(model)
-
-    make_predictions(model, X, y)
-
-    make_predictions(model, TX, Ty)
-
-    print(cross_validation(model, X, y))
+    testModelOnData(model, X, y, TX, Ty)
 
 
+def gaussianNBDemo(X, y, TX, Ty):
+    # 朴素贝叶斯
+    from sklearn.naive_bayes import GaussianNB
+    model = GaussianNB()
+    testModelOnData(model, X, y, TX, Ty)
 
-def testSimpleTree():
+def kNeighborsDemo(X, y, TX, Ty):
+    # K近邻
+    from sklearn.neighbors import KNeighborsClassifier
+    # fit a k-nearest neighbor model to the data
+    model = KNeighborsClassifier()
+    testModelOnData(model, X, y, TX, Ty)
+
+
+def svmDemo(X, y, TX, Ty):
+    # SVM
+    from sklearn.svm import SVC
+    # fit a SVM model to the data
+    model = SVC()
+    testModelOnData(model, X, y, TX, Ty)
+
+def testWithScaledAndOneHotEncoderedData():
 
     X, y, TX, Ty = loadData()
 
@@ -266,17 +283,26 @@ def testSimpleTree():
     # decisionTree(X, y, TX, Ty)
     # decisionTree(niceX, y, niceTX, Ty)
 
-    # 逻辑回归
-    logisticRegression(X, y, TX, Ty)
-    logisticRegression(niceX, y, niceTX, Ty)
+    # 逻辑回归, become better
+    # logisticRegression(X, y, TX, Ty) # [ 0.79767828  0.79887599  0.79839676]
+    # logisticRegression(niceX, y, niceTX, Ty) # [ 0.84973282  0.85028561  0.84953469]
+
+    # gaussianNB, become worse
+    # gaussianNBDemo(X, y, TX, Ty)    # [ 0.79390087  0.79546711  0.79747535]
+    # gaussianNBDemo(niceX, y, niceTX, Ty)    # [ 0.47475585  0.54809287  0.47765595]
 
 
+    # KNN, cost much more time to the transformed dataset, become better
+    # kNeighborsDemo(X, y, TX, Ty) # [ 0.77833057  0.7740925   0.7734267 ]
+    # kNeighborsDemo(niceX, y, niceTX, Ty) # [ 0.82697623  0.83149069  0.83516079]
+
+
+    svmDemo(X, y, TX, Ty)
+    svmDemo(niceX, y, niceTX, Ty)
 
 
 if __name__ == '__main__':
-
-
-    testSimpleTree()
+    testWithScaledAndOneHotEncoderedData()
 
 
 
