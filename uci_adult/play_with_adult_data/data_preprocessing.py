@@ -21,8 +21,6 @@ def loadXandY(fileName):
     return X, y
 
 
-
-
 # # deal with the missing value
 # [Sci4.3.4. Encoding categorical features](http://scikit-learn.org/stable/modules/preprocessing.html#imputation-of-missing-values)
 
@@ -32,7 +30,6 @@ def simpleImputer(X):
     imp = Imputer(missing_values='NaN', strategy='mean', axis=0)
     imp.fit(X)
     return imp.transform(X)
-
 
 
 # ## The doc mentioned that we should use one hot encoding since `these expect continuous input, and would interpret the categories as being ordered, which is often not desired `.
@@ -54,8 +51,6 @@ def oneHotEncoderX(X, n_values, categorical_features='all'):
     return np.array(enc.transform(X).toarray())
 
 
-
-
 # 数据归一化(Data Normalization)
 
 def simpleScale(X):
@@ -65,6 +60,15 @@ def simpleScale(X):
     # standardize the data attributes
     return preprocessing.scale(X)
 
+def scaleWithFeaturesAndKeepLocation(X, selected=[]):
+    X = X.copy()  # Do not pollute the outside X
+    from sklearn.preprocessing import scale
+    selectedX = X[:,selected]
+    X[:,selected] = scale(selectedX)
+    return X
+
+
+
 '''
 Copy from `https://github.com/scikit-learn/scikit-learn/blob/14031f6/sklearn/preprocessing/data.py#L1728`
 
@@ -72,13 +76,15 @@ def _transform_selected(X, transform, selected="all", copy=True):
 
 It transform the selected cols and put the unchanged cols to right.
 '''
-def scaleWithFeatures(X, selected="all",  copy=True):
+
+
+def scaleWithFeatures(X, selected="all", copy=True):
     import six
     from sklearn.preprocessing import scale
     import numpy as np
     from scipy import sparse
 
-    X = X.copy() # Do not pollute the outside X
+    X = X.copy()  # Do not pollute the outside X
 
     if isinstance(selected, six.string_types) and selected == "all":
         return scale(X)
@@ -109,9 +115,6 @@ def scaleWithFeatures(X, selected="all",  copy=True):
             return np.hstack((X_sel, X_not_sel))
 
 
-
-
-
 def feature_selection(mdoel, X, y):
     # 特征选择(Feature Selection)
     from sklearn.ensemble import ExtraTreesClassifier
@@ -119,7 +122,6 @@ def feature_selection(mdoel, X, y):
     model.fit(X, y)
     # display the relative importance of each attribute
     print(model.feature_importances_)
-
 
 
 def show_predictions(y, predicted):
@@ -132,7 +134,6 @@ def show_predictions(y, predicted):
     plt.show()
 
 
-
 def make_predictions(model, X, y):
     from sklearn import metrics
     # make predictions
@@ -142,6 +143,8 @@ def make_predictions(model, X, y):
     print(metrics.classification_report(expected, predicted))
     print(metrics.confusion_matrix(expected, predicted))
     print('\n')
+
+
 #     show_predictions(expected[::len(expected)//20], predicted[::len(predicted)//20])
 
 
@@ -152,14 +155,14 @@ def cross_validation(model, X, y):
     return cross_val_score(model, X, y, cv=k_fold, n_jobs=-1)
 
 
-
-def getLine(fileName, lineNum):
+def getLineFromFile(fileName, lineNum):
     with open(fileName, 'r') as f:
         all = f.readlines()
 
     return all[lineNum].strip()
 
-# getLine(baseDir + 'adult.data', 848)
+
+# getLineFromFile(baseDir + 'adult.data', 848)
 
 
 
@@ -173,19 +176,52 @@ def testScaleWithFeatures():
 
     directScaledX = preprocessing.scale(X)
 
-    scaledX =  scaleWithFeatures(X, 'all')
+    scaledX = scaleWithFeatures(X, 'all')
 
-    firstColScaledX = scaleWithFeatures(X, [0,2])
+    firstColScaledX = scaleWithFeatures(X, [0, 2])
 
     print(X)
 
-    print((directScaledX==scaledX).all())
+    print((directScaledX == scaledX).all())
 
     print(directScaledX)
 
     print(firstColScaledX)
 
     print(type(X), type(firstColScaledX))
+
+
+def testScaleWithFeaturesAndKeepLocation():
+    from sklearn import preprocessing
+    import numpy as np
+    X = np.array([[1., -1., 2.],
+                  [2., 0., 0.],
+                  [0., 1., -1.]])
+
+    directScaledX = preprocessing.scale(X)
+
+    scaledX = scaleWithFeatures(X, 'all')
+
+    scaledXAndKeepLocation = scaleWithFeaturesAndKeepLocation(X, [0, 2])
+
+    print(X)
+
+    print((directScaledX == scaledX).all())
+
+    print(directScaledX)
+
+    print(scaledXAndKeepLocation)
+
+
+
+def checkNegative(X):
+    print('Enter ckeck negative..')
+    import numpy as np
+    diff = list(np.where(X < 0))
+    print(len(diff[0]))
+    firstLessThan0 = (diff[0][0], diff[1][0])
+    print(firstLessThan0)
+    print(X[firstLessThan0])
 
 
 
@@ -199,9 +235,18 @@ def getScaledAndOneHotEncoderedX(X):
     # Suggest scaleWithFeatures first, since there is less cols after change. But then, the onehot features will not remain the orginal order,
     # And becomes range(len(continuous_features)+1, X.shape[1]), thus range(6,14)
 
+
+    scaleWithFeaturesAndKeepLocationX =  scaleWithFeaturesAndKeepLocation(X, continuous_features)
+
+    # checkNegative(scaleWithFeaturesAndKeepLocationX)
+
+
     scaleWithFeaturesX = scaleWithFeatures(X, continuous_features)
 
-    onehotEncoderedX = oneHotEncoderX(scaleWithFeaturesX, n_values=onehot_n_values, categorical_features=list(range(6, 14)))
+    # checkNegative(scaleWithFeaturesX)
+
+    onehotEncoderedX = oneHotEncoderX(scaleWithFeaturesX, n_values=onehot_n_values,
+                                      categorical_features=list(range(6, 14)))
     # print(X[1])
     # print(scaleWithFeaturesX[1])
     # print(len(onehotEncoderedX[1]))
@@ -220,10 +265,11 @@ def loadData():
     X, y = loadXandY(fileName)
     TX, Ty = loadXandY(testFileName)
 
+
     X = simpleImputer(X)
     TX = simpleImputer(TX)
 
-    return X,y,TX,Ty
+    return X, y, TX, Ty
 
 
 def testModelOnData(model, X, y, TX, Ty):
@@ -244,7 +290,7 @@ def logisticRegression(X, y, TX, Ty):
     testModelOnData(model, X, y, TX, Ty)
 
 
-def decisionTree(X, y, TX, Ty):
+def decisionTreeDemo(X, y, TX, Ty):
     from sklearn.tree import DecisionTreeClassifier
     # fit a CART model to the data
     model = DecisionTreeClassifier()
@@ -256,6 +302,7 @@ def gaussianNBDemo(X, y, TX, Ty):
     from sklearn.naive_bayes import GaussianNB
     model = GaussianNB()
     testModelOnData(model, X, y, TX, Ty)
+
 
 def kNeighborsDemo(X, y, TX, Ty):
     # K近邻
@@ -272,8 +319,8 @@ def svmDemo(X, y, TX, Ty):
     model = SVC()
     testModelOnData(model, X, y, TX, Ty)
 
-def testWithScaledAndOneHotEncoderedData():
 
+def testWithScaledAndOneHotEncoderedData():
     X, y, TX, Ty = loadData()
 
     niceX = getScaledAndOneHotEncoderedX(X)
@@ -296,18 +343,14 @@ def testWithScaledAndOneHotEncoderedData():
     # kNeighborsDemo(X, y, TX, Ty) # [ 0.77833057  0.7740925   0.7734267 ]
     # kNeighborsDemo(niceX, y, niceTX, Ty) # [ 0.82697623  0.83149069  0.83516079]
 
-
-    svmDemo(X, y, TX, Ty)
-    svmDemo(niceX, y, niceTX, Ty)
+    # SVC, takes long time to process, become better
+    # svmDemo(X, y, TX, Ty) # [ 0.76266814  0.76054911  0.7556436 ]
+    # svmDemo(niceX, y, niceTX, Ty) # [ 0.84512622  0.85443155  0.85156178]
 
 
 if __name__ == '__main__':
     testWithScaledAndOneHotEncoderedData()
 
-
-
-
-
-
-
     # testScaleWithFeatures()
+
+    # testScaleWithFeaturesAndKeepLocation()
