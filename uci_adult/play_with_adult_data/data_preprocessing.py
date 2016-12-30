@@ -235,12 +235,6 @@ def getScaledAndOneHotEncoderedX(X):
     # Suggest scaleWithFeatures first, since there is less cols after change. But then, the onehot features will not remain the orginal order,
     # And becomes range(len(continuous_features)+1, X.shape[1]), thus range(6,14)
 
-
-    scaleWithFeaturesAndKeepLocationX =  scaleWithFeaturesAndKeepLocation(X, continuous_features)
-
-    # checkNegative(scaleWithFeaturesAndKeepLocationX)
-
-
     scaleWithFeaturesX = scaleWithFeatures(X, continuous_features)
 
     # checkNegative(scaleWithFeaturesX)
@@ -327,25 +321,25 @@ def testWithScaledAndOneHotEncoderedData():
     niceTX = getScaledAndOneHotEncoderedX(TX)
 
     # 决策树
-    # decisionTree(X, y, TX, Ty)
-    # decisionTree(niceX, y, niceTX, Ty)
+    decisionTreeDemo(X, y, TX, Ty) # [ 0.8067072   0.81343284  0.81341565]
+    decisionTreeDemo(niceX, y, niceTX, Ty) # [ 0.81398563  0.8113138   0.81608772]
 
     # 逻辑回归, become better
-    # logisticRegression(X, y, TX, Ty) # [ 0.79767828  0.79887599  0.79839676]
-    # logisticRegression(niceX, y, niceTX, Ty) # [ 0.84973282  0.85028561  0.84953469]
+    logisticRegression(X, y, TX, Ty) # [ 0.79767828  0.79887599  0.79839676]
+    logisticRegression(niceX, y, niceTX, Ty) # [ 0.84973282  0.85028561  0.84953469]
 
     # gaussianNB, become worse
-    # gaussianNBDemo(X, y, TX, Ty)    # [ 0.79390087  0.79546711  0.79747535]
-    # gaussianNBDemo(niceX, y, niceTX, Ty)    # [ 0.47475585  0.54809287  0.47765595]
+    gaussianNBDemo(X, y, TX, Ty)    # [ 0.79390087  0.79546711  0.79747535]
+    gaussianNBDemo(niceX, y, niceTX, Ty)    # [ 0.47475585  0.54809287  0.47765595]
 
 
     # KNN, cost much more time to the transformed dataset, become better
-    # kNeighborsDemo(X, y, TX, Ty) # [ 0.77833057  0.7740925   0.7734267 ]
-    # kNeighborsDemo(niceX, y, niceTX, Ty) # [ 0.82697623  0.83149069  0.83516079]
+    kNeighborsDemo(X, y, TX, Ty) # [ 0.77833057  0.7740925   0.7734267 ]
+    kNeighborsDemo(niceX, y, niceTX, Ty) # [ 0.82697623  0.83149069  0.83516079]
 
     # SVC, takes long time to process, become better
-    # svmDemo(X, y, TX, Ty) # [ 0.76266814  0.76054911  0.7556436 ]
-    # svmDemo(niceX, y, niceTX, Ty) # [ 0.84512622  0.85443155  0.85156178]
+    svmDemo(X, y, TX, Ty) # [ 0.76266814  0.76054911  0.7556436 ]
+    svmDemo(niceX, y, niceTX, Ty) # [ 0.84512622  0.85443155  0.85156178]
 
 
 if __name__ == '__main__':

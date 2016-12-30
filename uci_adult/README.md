@@ -25,7 +25,20 @@ First, read the article proposed from the scikit tutorial,[4.3.1.3. Scaling data
 
 In fact, there are some codes in libs, see [Converting categorical data into numbers with Pandas and Scikit-learn](http://fastml.com/converting-categorical-data-into-numbers-with-pandas-and-scikit-learn/)
 
+``` python
+cols_to_transform = [ 'a', 'list', 'of', 'categorical', 'column', 'names' ]
+df_with_dummies = df.get_dummies( columns = cols_to_transform )
+```
+
 and [Note on using OneHotEncoder in scikit-learn to work on categorical features](https://xgdgsc.wordpress.com/2015/03/20/note-on-using-onehotencoder-in-scikit-learn-to-work-on-categorical-features/)
+
+``` python
+encoder = sklearn.preprocessing.OneHotEncoder()
+label_encoder = sklearn.preprocessing.LabelEncoder()
+data_label_encoded = label_encoder.fit_transform(data['category_feature'])
+data['category_feature'] = data_label_encoded
+data_feature_one_hot_encoded = encoder.fit_transform(data[['category_feature']].as_matrix())
+```
 
 ### Continuous attributes should (normalize and) scale. 
 
