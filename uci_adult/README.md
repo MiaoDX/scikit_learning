@@ -45,3 +45,12 @@ data_feature_one_hot_encoded = encoder.fit_transform(data[['category_feature']].
 `preprocessing.scale(X)`, NOTE, onehot encoded attrs should not scale.
 
 ## TODO
+
+
+## Conclusion
+
+In fact, for a classification task ,with the `GridSearchCV` and/or `RandomizedSearchCV` to get nice params for specific algorithms, we only need to find the proper algos to use and just concentrate on providing nice data to the algos.
+
+So, preprocessing is essential, the onehotencoding if necessary, feature selection/dimensionality reduction if possible.
+
+And the most important is the ability to explain the results, why the results are getting better and why just cannot continue to be better.
