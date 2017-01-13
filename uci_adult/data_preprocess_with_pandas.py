@@ -72,7 +72,8 @@ if __name__ == '__main__':
     feature_names = get_feature_names(describe_file)
     feature_names.append('category') # The last line is the real category
 
-    data_files = [base_dir+'adult.data']#, base_dir+'adult.test']
+    # data_files = [base_dir+'adult.data']#, base_dir+'adult.test']
+    data_files = [base_dir+'adult.all']
 
     for data_file in data_files:
 
