@@ -1,5 +1,7 @@
 #-*- coding: utf-8 -*-
 
+from data_preprocess_with_pandas import get_feature_names
+
 def get_all_str2num(fileName):
     all_str2num_dict = {}
 
@@ -72,13 +74,7 @@ def put_all_lines_num_to_file(to_save_file_name, all_lines_num):
             line_str = ','.join(str(e) for e in line)
             f.write(line_str + '\n')
 
-def get_feature_names(feature_names_file):
-    feature_names = []
-    with open(feature_names_file, 'r') as f:
-        for line in f.readlines():
-            feature_name = line[:line.find(':')]
-            feature_names.append(feature_name)
-    return feature_names
+
 
 if __name__ == '__main__':
     # baseDir = 'H:/practice/scikit_class/scikit_learning/uci_adult'

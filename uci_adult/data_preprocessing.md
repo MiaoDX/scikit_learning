@@ -16,7 +16,11 @@ The original data format is Ok, but not so appealing, since we have no idea each
 
 And the original dataset have split the dataset into two files, one for training, the other for test. Seems nice, but in fact, maybe we should combine them together and split after preprocessing. We will cover it below.
 
-`cat adult.data adult.test > adult.all` is enough, but please delete the first line `|1x3 Cross validator` before combine them together.
+
+`adult.test` delete the first line `|1x3 Cross validator`,last column have `.` in the last, remove it:
+`sed 's/\.$//' adult.test > adult.test.new`.
+And then `cat adult.data adult.test.new > adult.all` is enough,
+
 
 Load data into dataframe is just read from file:
 
@@ -161,6 +165,7 @@ Well, that's it. For now, we encode the categorical features into 0,1,2,3..., so
 One possibility to convert categorical features to features that can be used with scikit-learn estimators is to use a one-of-K or one-hot encoding, which is implemented in OneHotEncoder. This estimator transforms each categorical feature with m possible values into m binary features, with only one active.
 
 To do it with libs, baidued/googled found some nice post:
+
 * [Converting categorical data into numbers with Pandas and Scikit-learn](http://fastml.com/converting-categorical-data-into-numbers-with-pandas-and-scikit-learn/)
 
 ``` python
@@ -290,3 +295,52 @@ Then they are just the same (as expected).
 
 **So, we replace the missing value with mean value, in fact, that just make not so much sense. However, we really need a method to make things go through.**
 
+
+Back to adult dataset, we stick to pandas way:
+
+``` python
+def oneHotWithPandas(df, features_non_continuous_without_category):
+    import numpy as np
+    df = df.iloc[:,:-1].copy()
+    # http://pandas.pydata.org/pandas-docs/stable/generated/pandas.get_dummies.html, onehot encoding
+    df_with_dummies = pd.get_dummies(df,columns=features_non_continuous_without_category) # if not specify `dummy_na`, then `NaN` is ignored.
+    df_with_dummies = pd.DataFrame(df_with_dummies, dtype=np.int32) # to make sure the result is integer
+    return df_with_dummies
+```
+
+`features_non_continuous_without_category` stands for all the categorical features expect `category/class`.
+
+We can use `OneHotEncoder` of course, with some tweaks:
+
+``` vi
+# copy from http://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.OneHotEncoder.html#sklearn.preprocessing.OneHotEncoder
+
+categorical_features : “all” or array of indices or mask
+
+    Specify what features are treated as categorical.
+
+        ‘all’ (default): All features are treated as categorical.
+        array of indices: Array of categorical feature indices.
+        mask: Array of length n_features and with dtype=bool.
+
+    Non-categorical features are always stacked to the right of the matrix.
+```
+
+As for our use case, just hand count the categorical features:
+
+`[1, 3, 5, 6, 7, 8, 9, 13]`, code snipes can be:
+
+``` python
+from sklearn import preprocessing
+
+encoder = preprocessing.OneHotEncoder(categorical_features=[1, 3, 5, 6, 7, 8, 9, 13])
+encoder.fit(df_tree_mean)
+dummies2 = encoder.transform(df_tree_mean).toarray()
+dummies2.shape
+```
+
+Got `(48842, 106)`, seems okay.
+
+## 5. All in one
+
+I think it's really mess if you go through this post, so just all in one, see [`data_preprocess_with_pandas`](data_preprocess_with_pandas.py).
