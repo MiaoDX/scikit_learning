@@ -1,7 +1,6 @@
 # coding: utf-8
 
-import pandas as pd #this is how I usually import pandas
-
+import pandas as pd
 from data_preprocess import get_feature_names
 
 
@@ -60,8 +59,7 @@ def encode_categorical_features(data):
     for feature_name in features_non_continuous:
         data[feature_name] = data[feature_name].factorize()[0]
 
-    data = pd.DataFrame(data, dtype=np.int32)
-    data = data.replace('-1','NaN',regex=True) # It's trick, really, if we use `np.nan`, which seems nice, but the column will become `float64` instead of int
+    data = data.replace(-1,np.nan) # we change -1 back to nan to avoid possibly wrong use of -1. However, data type will change to float.
     return data
 
 
@@ -73,31 +71,44 @@ if __name__ == '__main__':
     feature_names.append('category') # The last line is the real category
 
     # data_files = [base_dir+'adult.data']#, base_dir+'adult.test']
-    data_files = [base_dir+'adult.all']
+    data_file = base_dir+'adult.all'
 
-    for data_file in data_files:
+    df, df_noNaN = loadFromFileWithPandas(data_file, feature_names)
+    df.to_csv(data_file + '.NaN')
+    df_noNaN.to_csv(data_file + '.noNaN')
 
-        df, df_noNaN = loadFromFileWithPandas(data_file, feature_names)
-        df.to_csv(data_file + '.NaN')
-        df_noNaN.to_csv(data_file + '.noNaN')
-
-        """
-        For tree base classification algos, just encode them and scale the necessary features
-        """
-        df_tree = encode_categorical_features(df)
-        # these features is have much better maxmum than others, when used in `distance based` algo, can be not so good
-        df_tree = scaleDataFrameWithFeatures(df_tree, selected=['fnlwgt', 'capital-gain','capital-loss'])
-        df_tree.to_csv(data_file + '.scale')
+    """
+    For tree base classification algos, just encode them and scale the necessary features
+    """
+    df_tree = encode_categorical_features(df)
+    df_tree.to_csv(data_file + '.cate')
 
 
-        # deal with missing value, use mean or other methods
+    # deal with missing value, use mean or other methods
+    import numpy as np
+    df_tree_mean = df_tree.fillna(df_tree.mean())
+    df_tree_mean = pd.DataFrame(df_tree_mean, dtype=np.int32)
 
 
-        """
-        For distance based algos, it's better to use onehot methods
-        This way can have feature info saved, a.k.a, `workclass_Federal-gov,workclass_Local-gov,workclass_Never-worked,workclass_Private,workclass_Self-emp-inc`
-        But, it is not so easy to deal with missing values.
-        """
-        df_with_dummies = oneHotWithPandas(df)
-        df_with_dummies = scaleDataFrameWithFeatures(df_with_dummies, selected=['fnlwgt', 'capital-gain','capital-loss'])
-        df_with_dummies.to_csv(data_file+'.onehot')
+    # these features is have much better maxmum than others, when used in `distance based` algo, can be not so good
+    df_tree_scale = scaleDataFrameWithFeatures(df_tree_mean, selected=['fnlwgt', 'capital-gain','capital-loss'])
+    df_tree_scale.to_csv(data_file + '.scale')
+
+
+
+    """
+    For distance based algos, it's better to use onehot methods
+    This way can have feature info saved, a.k.a, `workclass_Federal-gov,workclass_Local-gov,workclass_Never-worked,workclass_Private,workclass_Self-emp-inc`
+    But, it is not so easy to deal with missing values.
+    """
+    df_with_dummies = oneHotWithPandas(df)
+    df_with_dummies = scaleDataFrameWithFeatures(df_with_dummies, selected=['fnlwgt', 'capital-gain','capital-loss'])
+    df_with_dummies.to_csv(data_file+'.onehot')
+
+
+    """
+    Almost the same as above, expect that the input data is df_tree_mean, aka, replace `NaN` with mean value and make sure dtype is int32
+    """
+    df_with_dummies = oneHotWithPandas(df_tree_mean)
+    df_with_dummies = scaleDataFrameWithFeatures(df_with_dummies, selected=['fnlwgt', 'capital-gain','capital-loss'])
+    df_with_dummies.to_csv(data_file+'.onehot2')

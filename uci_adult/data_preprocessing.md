@@ -52,3 +52,241 @@ df_noNaN.to_csv(data_file + '.noNaN')
 ```
 
 We got `(48842, 15) (45222, 15) 3620` in the console, which says that, all dataset is 48842 samples with 3620 have `NaN`, which is 7.412%, so just drop them just need better reasons.
+
+So far, we have changed two data file into one and the data format has become DataFrame. Just have a look at the data file:
+
+
+
+```
+$ head -n 3 adult.all
+39, State-gov, 77516, Bachelors, 13, Never-married, Adm-clerical, Not-in-family, White, Male, 2174, 0, 40, United-States, <=50K
+50, Self-emp-not-inc, 83311, Bachelors, 13, Married-civ-spouse, Exec-managerial, Husband, White, Male, 0, 0, 13, United-States, <=50K
+38, Private, 215646, HS-grad, 9, Divorced, Handlers-cleaners, Not-in-family, White, Male, 0, 0, 40, United-States, <=50K
+
+
+$ head -n 3 adult.all.NaN
+,age,workclass,fnlwgt,education,education-num,marital-status,occupation,relationship,race,sex,capital-gain,capital-loss,hours-per-week,native-country,category
+0,39,State-gov,77516,Bachelors,13,Never-married,Adm-clerical,Not-in-family,White,Male,2174,0,40,United-States,<=50K
+1,50,Self-emp-not-inc,83311,Bachelors,13,Married-civ-spouse,Exec-managerial,Husband,White,Male,0,0,13,United-States,<=50K
+```
+
+That's it, the first line is the feature names(the last `category` stands for the class).
+
+
+## 3.Encoding categorical features(将描述符转化为数字)
+
+绝大多数库都需要输入是数字,所以需要将类似于 `sex: Female, Male.` 转化为 `0,1` 这种形式。
+
+从 scikit 摘取一些类似的内容：
+[Encoding categorical features](http://scikit-learn.org/stable/modules/preprocessing.html#encoding-categorical-features):
+
+>Often features are not given as continuous values but categorical. For example a person could have features ["male", "female"], ["from Europe", "from US", "from Asia"], ["uses Firefox", "uses Chrome", "uses Safari", "uses Internet Explorer"]. Such features can be efficiently coded as integers, for instance ["male", "from US", "uses Internet Explorer"] could be expressed as [0, 1, 3] while ["female", "from Asia", "uses Chrome"] would be [1, 2, 1].
+
+
+Both of sklearn and pandas have similar function, `LabelEncoder` and `factorize` respectively.
+
+To show in a simple example:
+
+``` python
+# Copy from http://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.LabelEncoder.html#sklearn.preprocessing.LabelEncoder
+
+>>> from sklearn import preprocessing
+>>> s = ["paris", "paris", "tokyo", "amsterdam"]
+>>> le = preprocessing.LabelEncoder()
+>>> le.fit(s)
+LabelEncoder()
+>>> list(le.classes_)
+['amsterdam', 'paris', 'tokyo']
+>>> le.transform(s) 
+array([1, 1, 2, 0], dtype=int64)
+>>> list(le.inverse_transform([1, 1, 2, 0]))
+['paris', 'paris', 'tokyo', 'amsterdam']
+
+
+# http://pandas.pydata.org/pandas-docs/stable/generated/pandas.factorize.html
+>>> import pandas as pd
+>>> s_s = pd.Series(s)
+>>> s_s.factorize()[0]
+array([0, 0, 1, 2])
+```
+
+Clearly, both is okay, even the results are a little different, and `LabelEncoder` seems better with `inverse_transform`. However, when the input have `NaN` values (which is common in our use case), `factorize` can deal with `na_sentinel` param(default set -1 when data is `None`):
+
+``` python
+>>> s.append(None)
+>>> s
+['paris', 'paris', 'tokyo', 'amsterdam', None]
+>>> le.fit(s)
+[...]
+TypeError: unorderable types: NoneType() > str()
+
+
+
+>>> s_s = pd.Series(s)
+>>> s_s.factorize()[0]
+array([ 0,  0,  1,  2, -1])
+
+```
+
+Well, so, maybe `sklearn` really did not mean to deal with the `None` or `NaN` values properly.
+
+Back to our adult dataset:
+
+``` python
+import pandas as pd
+data = pd.DataFrame.from_csv('adult_data/adult.all.NaN')
+
+features_names = data.columns.tolist()
+
+features_continuous = ['age', 'fnlwgt', 'education-num', 'capital-gain', 'capital-loss', 'hours-per-week']
+features_non_continuous = list(set(features_names).difference(set(features_continuous)))
+print(features_continuous)
+print(features_non_continuous)
+
+# features_non_continuous is just categorical features
+for feature_name in features_non_continuous:
+    data[feature_name] = data[feature_name].factorize()[0]
+
+data = data.replace(-1,np.nan) # we change -1 back to nan to avoid possibly wrong use of -1. However, data type will change to float.
+```
+
+Note that, we hard code the `features_continuous` to show continuous features, maybe seems a little not so clean, but no better ways exists (as far as I know).
+
+Well, that's it. For now, we encode the categorical features into 0,1,2,3..., so many classification algos can just use the data (Maybe do some scale and should pay attention to the `NaN` values).
+
+
+## 4.OneHot Encoder
+
+>Such integer representation can not be used directly with scikit-learn estimators, as these expect continuous input, and would interpret the categories as being ordered, which is often not desired (i.e. the set of browsers was ordered arbitrarily).
+One possibility to convert categorical features to features that can be used with scikit-learn estimators is to use a one-of-K or one-hot encoding, which is implemented in OneHotEncoder. This estimator transforms each categorical feature with m possible values into m binary features, with only one active.
+
+To do it with libs, baidued/googled found some nice post:
+* [Converting categorical data into numbers with Pandas and Scikit-learn](http://fastml.com/converting-categorical-data-into-numbers-with-pandas-and-scikit-learn/)
+
+``` python
+cols_to_transform = [ 'a', 'list', 'of', 'categorical', 'column', 'names' ]
+df_with_dummies = df.get_dummies( columns = cols_to_transform )
+```
+
+* and [Note on using OneHotEncoder in scikit-learn to work on categorical features](https://xgdgsc.wordpress.com/2015/03/20/note-on-using-onehotencoder-in-scikit-learn-to-work-on-categorical-features/):
+
+``` python
+encoder = sklearn.preprocessing.OneHotEncoder()
+label_encoder = sklearn.preprocessing.LabelEncoder()
+data_label_encoded = label_encoder.fit_transform(data['category_feature'])
+data['category_feature'] = data_label_encoded
+data_feature_one_hot_encoded = encoder.fit_transform(data[['category_feature']].as_matrix())
+```
+
+
+Note that `OneHotEncoder` still can not deal with `None` values, and `get_dummies` can:
+
+``` python
+data_to_transform = [0,0.0,2,-1,np.nan,None]
+dummies = pd.get_dummies(data_to_transform)
+print(dummies)
+```
+
+we got:
+
+``` vi
+   -1.0   0.0   2.0
+0   0.0   1.0   0.0
+1   0.0   1.0   0.0
+2   0.0   0.0   1.0
+3   1.0   0.0   0.0
+4   0.0   0.0   0.0
+5   0.0   0.0   0.0
+```
+
+So, `get_dummies` can successfully treat `0` and `0.0` as the same, but the `-1` is not the same as `None` or `np.nan` even in `get_dummies`, so after `factorize` we should replace `-1` with `np.nan` (see above).
+
+However, at this time, we should just deal with the missing value before we use onehot encoder:
+
+``` python
+data_to_transform_p = pd.Series([0,0,1.0,2,np.nan,None])
+print(data_to_transform_p.mode()[0])
+print(data_to_transform_p.mean())
+print(data_to_transform_p)
+data_to_transform_fillna = data_to_transform_p.fillna(data_to_transform_p.mean())
+print(data_to_transform_fillna)
+```
+
+Then we got:
+
+``` vi
+0.0
+0.75
+0    0.0
+1    0.0
+2    1.0
+3    2.0
+4    NaN
+5    NaN
+dtype: float64
+0    0.00
+1    0.00
+2    1.00
+3    2.00
+4    0.75
+5    0.75
+```
+
+Then, we want to use onehot encode, before that, please change data type to `int32`:
+
+`data_to_transform_fillna = pd.Series(data_to_transform_fillna, dtype=np.int32)`
+
+Now data is:
+
+``` vi
+0    0
+1    0
+2    1
+3    2
+4    0
+5    0
+dtype: int32
+```
+
+And now, we can use both method of `get_dummies` and `OneHotEncoder`:
+
+``` python
+dummies = pd.get_dummies(data_to_transform_fillna)
+print(dummies)
+```
+
+``` vi
+    -1    0    2
+0  0.0  1.0  0.0
+1  0.0  1.0  0.0
+2  0.0  0.0  1.0
+3  1.0  0.0  0.0
+4  0.0  1.0  0.0
+5  0.0  1.0  0.0
+```
+
+As for `OneHotencoder`:
+
+``` python
+from sklearn.preprocessing import OneHotEncoder
+enc = OneHotEncoder()
+data_to_transform_fillna_reshape = data_to_transform_fillna.reshape(-1, 1)
+enc.fit(data_to_transform_fillna_reshape)
+enc.transform(data_to_transform_fillna_reshape).toarray()
+```
+
+result is:
+
+``` vi
+array([[ 1.,  0.,  0.],
+       [ 1.,  0.,  0.],
+       [ 0.,  1.,  0.],
+       [ 0.,  0.,  1.],
+       [ 1.,  0.,  0.],
+       [ 1.,  0.,  0.]])
+```
+
+Then they are just the same (as expected).
+
+**So, we replace the missing value with mean value, in fact, that just make not so much sense. However, we really need a method to make things go through.**
+
