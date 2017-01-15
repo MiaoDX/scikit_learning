@@ -73,6 +73,27 @@ def loadDataFromFileWithPandas(data_file):
 
     return X_train, X_test, y_train, y_test
 
+
+def loadDataFromFileWithPandas2(data_file):
+    """
+
+    :param data_file:
+    :return:
+    """
+    from sklearn.model_selection import train_test_split
+    df = pd.DataFrame.from_csv(data_file)
+    data = df.as_matrix()[:, 0:-1]
+    target = df.as_matrix()[:, -1]
+
+    X_train = data[:32561]
+    y_train = target[:32561]
+    X_test = data[32561:]
+    y_test = target[32561:]
+
+    print(X_train.shape, y_train.shape, X_test.shape, y_test.shape)
+    return X_train, X_test, y_train, y_test
+
+
 def preprocessing():
 
     """
