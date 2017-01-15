@@ -12,9 +12,9 @@ First, read the article proposed from the scikit tutorial,[4.3.1.3. Scaling data
 
 >Further discussion on the importance of centering and scaling data is available on this FAQ: [Should I normalize/standardize/rescale the data?](http://www.faqs.org/faqs/ai-faq/neural-nets/part2/section-16.html)
 
-**See [data_prpcessing](data_processing.md) for more info**
+**See [data_preprocessing.md](data_preprocessing.md) for more info**
 
-When use the data, see [`randomized_search_decision_tree`](play_with_adult_data/randomized_search_decision_tree.py) for a demo.
+When use the data, see [`randomized_search_decision_tree`](play_with_adult_data/randomized_search_decision_tree.ipynb) for a demo.
 
 ``` python
 """
